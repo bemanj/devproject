@@ -100,7 +100,8 @@ Task.prototype.createIncident = function (description, callBack) {
         var myObj = JSON.parse(myJSON); 
         num = myObj.number;
 
-        console.log('Incident ticket created', body);//, body
+        console.log('Incident ticket created with ID: ', num);
+        //console.log(body);//, body
         //callBack(err, response, body);
 
         // add process to comment 
