@@ -85,6 +85,20 @@ Task.prototype.createIncident = function (top5, description, callBack) {
             'Cookie': this.snCoookie
         }
     }, function (err, response, body) {
+
+        request({
+            baseUrl: "https://api.mlab.com/api/1",
+            method: 'POST',
+            uri: '/databases/alorica_cpuinfodb/collections/CPU?apiKey=v8zcIIv0q_QMb_-IQ8xJRaKmvP2Zc0L5',
+            json: true,
+            body: {
+                "data": top5
+            }
+            
+        }, function (err, response, body) {
+            //callBack(err, response, body);
+        });
+
         //var data = response;
         //var data1 = JSON.parse(data);
         //var body_detail = body[0];//JSON.parse(body);
@@ -93,6 +107,7 @@ Task.prototype.createIncident = function (top5, description, callBack) {
         num = myObj.number;
 
         console.log('Incident ticket created ', num);//, body
+        console.log('System information is now logged in MongoDB');//, body
         //callBack(err, response, body);
 
         // add process to comment 
@@ -119,6 +134,25 @@ Task.prototype.getComments = function (taskID, callBack) {
             'Cookie': this.snCoookie
         }
 
+    }, function (err, response, body) {
+        callBack(err, response, body);
+    });
+}
+
+
+// Adds a comment to the task. 
+Task.prototype.pushToMongoDB = function (taskID, comment, callBack) {
+    var request = require('request');
+    request.debug = this.options.verbose;
+    request({
+        baseUrl: "https://api.mlab.com/api/1",
+        method: 'POST',
+        uri: '/databases/alorica_cpuinfodb/collections/CPU?apiKey=v8zcIIv0q_QMb_-IQ8xJRaKmvP2Zc0L5',
+        json: true,
+        body: {
+            "data": comment
+        }
+        
     }, function (err, response, body) {
         callBack(err, response, body);
     });
