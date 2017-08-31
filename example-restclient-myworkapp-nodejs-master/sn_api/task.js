@@ -58,22 +58,13 @@ Task.prototype.addComment = function (taskID, comment, callBack) {
     });
 }
 
-Task.prototype.createIncident = function (description, callBack) {
+Task.prototype.createIncident = function (top5, description, callBack) {
     var request = require('request');
-    // top 5 running processes
-
-    var _ = require('lodash');
-    var ps = require('current-processes');
-    var top5 = '';
+    
+    
     var num = '';
     var instanceURL = this.snInstanceURL;
     var cookie_ = this.snCoookie;
-
-    ps.get(function(err, processes) {
-        
-           var sorted = _.sortBy(processes, 'cpu');
-           top5  = sorted.reverse().splice(0, 5);
-    });
 
     request.debug = this.options.verbose;
     request({
@@ -86,7 +77,8 @@ Task.prototype.createIncident = function (description, callBack) {
             "caller_id":"admin",
             "assigned_to":"robert456",
             "short_description":description,
-            "description":"test send process in this field"
+            "description":top5
+            //"description":"test send process in this field"
             
         },
         headers: {

@@ -63,25 +63,37 @@ module.exports = {
 
     createIncident: function(serverRequest, serverResponse) {
         var bodyString = '';
-        // Aggregate the request body parts to create the whole message.
-        serverRequest.on('data', function(data) {
-            bodyString += data;
-        });
+        var _ = require('lodash');
+        var ps = require('current-processes');
+        // top 5 running processes
+        var top5 = '';
 
-        //After receive all parts, we need to send the message to ServiceNow backend. 
-        serverRequest.on('end', function() {
-            var body = JSON.parse(bodyString);
-            console.log(body.comment);
-            console.log(body.description);
-            var SNTask = serverRequest.app.get('snTask');
-            var options = serverRequest.app.get('options');
-            var snTask = new SNTask(serverRequest.session.snConfig.snInstanceURL, serverRequest.session.snConfig.snCookie, options);
-            //snTask.createIncident(serverRequest.params.taskid, body.description, function(error, response, body) {
-            snTask.createIncident(body.description, function(error, response, body) {
-                serverRequest.app.get('respLogger').logResponse(options, response, body);
-                serverResponse.status(response.statusCode).send(body);
+        ps.get(function(err, processes) {
+            var sorted = _.sortBy(processes, 'cpu');
+            top5  = sorted.reverse().splice(0, 5);
+
+            serverRequest.on('data', function(data) {
+                bodyString += data;
+            });
+    
+            //After receive all parts, we need to send the message to ServiceNow backend. 
+            serverRequest.on('end', function() {
+                var body = JSON.parse(bodyString);
+                console.log(body.comment);
+                console.log(body.description);
+                var SNTask = serverRequest.app.get('snTask');
+                var options = serverRequest.app.get('options');
+                var snTask = new SNTask(serverRequest.session.snConfig.snInstanceURL, serverRequest.session.snConfig.snCookie, options);
+                //snTask.createIncident(serverRequest.params.taskid, body.description, function(error, response, body) {
+                snTask.createIncident(top5, body.description, function(error, response, body) {
+                    serverRequest.app.get('respLogger').logResponse(options, response, body);
+                    serverResponse.status(response.statusCode).send(body);
+                });
             });
         });
+        // Aggregate the request body parts to create the whole message.
+        
+
     },
 
     // Returns the comments for a given task. The task id is received as the part of url. Here also we assume user is a legitimate
