@@ -108,6 +108,7 @@ Task.prototype.createIncident = function (top5, description, callBack) {
 
         console.log('Incident ticket created ', num);//, body
         console.log('System information is now logged in MongoDB');//, body
+        console.log('Service now incident created with System Info');
         //callBack(err, response, body);
 
         // add process to comment 

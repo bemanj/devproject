@@ -64,35 +64,98 @@ module.exports = {
     createIncident: function(serverRequest, serverResponse) {
         var bodyString = '';
         var _ = require('lodash');
-        var ps = require('current-processes');
-        // top 5 running processes
+        //var ps = require('current-processes');
+         
+        // top 5 current processes
         var top5 = '';
 
-        ps.get(function(err, processes) {
-            var sorted = _.sortBy(processes, 'cpu');
-            top5  = sorted.reverse().splice(0, 5);
+        // System information procesess
+        const si = require('systeminformation');
+        var jsoncpuObject;
+        var jsonOSinfoObject;
+        var jsonSysteminfoObject;
+        var jsonSystemInfo=''; 
 
-            serverRequest.on('data', function(data) {
-                bodyString += data;
-            });
+
+
+
+        // Current -
+       // ps.get(function(err, processes) {
+          //  var sorted = _.sortBy(processes, 'cpu');
+           // top5  = sorted.reverse().splice(0, 5);
+
+          //  serverRequest.on('data', function(data) {
+           //     bodyString += data;
+           // });
+
     
+            
             //After receive all parts, we need to send the message to ServiceNow backend. 
-            serverRequest.on('end', function() {
-                var body = JSON.parse(bodyString);
-                console.log(body.comment);
-                console.log(body.description);
-                var SNTask = serverRequest.app.get('snTask');
-                var options = serverRequest.app.get('options');
-                var snTask = new SNTask(serverRequest.session.snConfig.snInstanceURL, serverRequest.session.snConfig.snCookie, options);
+           // serverRequest.on('end', function() {
+              //  var body = JSON.parse(bodyString);
+              //  console.log(body.comment);
+              //  console.log(body.description);
+              //  var SNTask = serverRequest.app.get('snTask');
+              //  var options = serverRequest.app.get('options');
+             //   var snTask = new SNTask(serverRequest.session.snConfig.snInstanceURL, serverRequest.session.snConfig.snCookie, options);
                 //snTask.createIncident(serverRequest.params.taskid, body.description, function(error, response, body) {
-                snTask.createIncident(top5, body.description, function(error, response, body) {
-                    serverRequest.app.get('respLogger').logResponse(options, response, body);
-                    serverResponse.status(response.statusCode).send(body);
-                });
-            });
-        });
+             //   snTask.createIncident(top5, body.description, function(error, response, body) {
+             //       serverRequest.app.get('respLogger').logResponse(options, response, body);
+             //       serverResponse.status(response.statusCode).send(body);
+            //    });
+          //  });
+      //  }); // end of Current Process
         // Aggregate the request body parts to create the whole message.
         
+
+        /// System information
+       
+                
+                si.cpu(function (data) {
+                    
+                        //CPU-Information
+                        jsoncpuObject = { 'CPU- Information': data };
+                    
+                        si.osInfo(function (data) {
+                    
+                            //Operation System -Information
+                            jsonOSinfoObject = { 'Operating System-Information': data };
+                    
+                            // System -Information
+                            si.system(function (data) {
+                    
+                                jsonSysteminfoObject = { 'System-Information': data };
+                    
+                                si.networkInterfaces(function (data) {
+                                    jsonNetworkInfoObject = { 'Network-Information': data };
+                    
+                                    jsonSystemInfo = JSON.stringify(jsonSysteminfoObject).concat(JSON.stringify(jsoncpuObject)).concat(JSON.stringify(jsonSysteminfoObject)).concat(JSON.stringify(jsonNetworkInfoObject));
+                                        
+                                    serverRequest.on('data', function(data) {
+                                        bodyString += data; });
+                                      //After receive all parts, we need to send the message to ServiceNow backend. 
+                                      serverRequest.on('end', function() {
+                                        var body = JSON.parse(bodyString);
+                                        console.log(body.comment);
+                                        console.log(body.description);
+                                        var SNTask = serverRequest.app.get('snTask');
+                                        var options = serverRequest.app.get('options');
+                                        var snTask = new SNTask(serverRequest.session.snConfig.snInstanceURL, serverRequest.session.snConfig.snCookie, options);
+                                        //snTask.createIncident(serverRequest.params.taskid, body.description, function(error, response, body) {
+                                        snTask.createIncident(jsonSystemInfo, body.description, function(error, response, body) {
+                                            serverRequest.app.get('respLogger').logResponse(options, response, body);
+                                            serverResponse.status(response.statusCode).send(body);
+                                        });
+                                    });
+
+
+                                })
+                            })
+                    
+                        })
+                    
+                    })
+
 
     },
 
